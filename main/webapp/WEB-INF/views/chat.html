@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="AngularSpringApp" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
+<head>
+    <meta charset="UTF-8"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, initial-scale=1"/>
+    <title>Hiberchat</title>
+    <script src="resources/js/angular/angular.js"></script>
+    <script src="resources/js/app.js"></script>
+    <script src="resources/js/controllers/MainController.js"></script>
+    <link rel="stylesheet" href="resources/css/index.css"/>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.7.0/css/bootstrap-datepicker.min.css" />
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css"/>
+    <link href="resources/css/sb-admin.css" rel="stylesheet"/>
+    <script src="http://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
+    <link href="resources/bootstrap/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css"/>
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular-route.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular-animate.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.4/angular-aria.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.0.4/angular-material.js"></script>
+    <script src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/t-114/assets-cache.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.2/moment.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.0.4/angular-material.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+    <script type="text/javascript" src="https://unpkg.com/kd-shim-sockjs-client@0.3.4/sockjs-0.3.4.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+</head>
+<body style="min-height: 100%; min-width: 100%; background: #25181f;">
+<div class="parent-block" ng-controller="MainController" ng-init="disconnect()">
+
+    <div class="row justify-content-center">
+        <div class="col-md-2">
+            <div class="row">
+                <div class="col-md-10" style="padding-left: 10px; padding-right: 10px;">
+                    <input id="searchInpt" onkeyup="checkParams()" type="search" class="chat-forms" style="background: #35242c;" placeholder="Find by nickname" ng-model="friendNickname"/>
+                </div>
+                <div class="col-md-2" style="padding-left: 0; padding-right: 0;">
+                    <button id="searchBtn" class="send-btn" data-toggle="modal" data-target="#findUserModal" ng-click="findUser()" disabled="disabled"><i class="fa fa-search"></i></button>
+                </div>
+            </div>
+            <div class="row">
+                <div class="selected-div">
+                    <select multiple="multiple" id="contact-list">
+                        <option ng-repeat="friend in myFriends" ng-click="changeSelectedUser(friend.id, friend.nickname); disconnect(); connect();">{{friend.nickname}}</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="wrapper">
+                <div class="header">
+                    <div class="row">
+                        <div ng-show="friendId == 0" class="user-name">Your friend's name will be here</div>
+                        <div ng-show="friendId > 0" class="user-name">
+                            {{friendName}} <button class="btn btn-sm btn-link" data-toggle="modal" data-target="#deleteUser" style="color: #A3818F;">(delete user)</button>
+                        </div>
+                    </div>
+                </div>
+                    <div class="row">
+                        <div class="chatbox">
+                            <div id="msgs" >
+                                <div class="chat_inner">
+                                <div ng-show="userIsSelected &amp;&amp; messages != null" ng-repeat="msg in messages" ng-class="{'chat_in clearfix' : msg.fromUserId == friendId, 'chat_out clearfix' : msg.fromUserId == user.id}">
+                                    <span class="message">{{msg.messageText}}</span>
+                                    <span class="author">on {{msg.sendingDate.year}}-{{msg.sendingDate.monthValue}}-{{msg.sendingDate.dayOfMonth}} at {{msg.sendingDate.hour}}:{{msg.sendingDate.minute}}</span>
+                                </div>
+                                </div>
+                                <div id="msg_container" style="display: flex; flex-flow: column wrap;" class="chat_inner">
+                                </div>
+                                <div id="noMessagesDiv" ng-show="userIsSelected &amp;&amp; messages == null">
+                                    <span class="text text-center text-info">
+                                        No messages here...
+                                    </span>
+                                </div>
+                                <div ng-show="!userIsSelected">
+                                    <span class="text text-center text-info">
+                                        Select user to start a chat
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                <div class="footer"  style="padding-right: 12px;">
+                    <form ng-submit="sendMessage()">
+                        <div class="row">
+                            <div class="col-md-10" style="padding-left: 0; padding-right: 0;">
+                                <input type="text" class="chat-forms" placeholder="Your message..." style="background: #382434;" ng-model="message.messageText"/>
+                            </div>
+                            <div class="col-md-2" style="padding-left: 0; padding-right: 12px;">
+                                <button type="submit" class="send-btn">SEND</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3" style="padding: 10px;">
+            <div class="users-list-div" style="padding-right: 30px; padding-top: 10px;">
+                <span class="login-span"><i class="fa fa-address-card"></i> <b>{{user.nickname}}</b></span>
+                <hr />
+                <p><b>Country: </b>{{user.country}}</p>
+                <p><b>City: </b>{{user.city}}</p>
+                <p><b>Email: </b>{{user.email}}</p>
+                <p><b>Birth date: </b>{{user.birthDate.year}}-{{user.birthDate.month}}-{{user.birthDate.dayOfMonth}}</p>
+                <p><b>Registration date: </b>{{user.registrationDate.year}}-{{user.registrationDate.month}}-{{user.registrationDate.dayOfMonth}}</p>
+                <hr />
+                <div class="centered">
+                    <form th:action="@{/logout}" method="post">
+                    <button type="submit" class="logout-btn" ng-click="disconnect()">LOGOUT <i class="fa fa-sign-out-alt"></i></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="findUserModal" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+        <div class="modal-dialog modal-sm modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body" style="background: #6A0E42; color: #D15F9F;">
+                    <div id="user_found" ng-show="showModalWindow">
+                        <button type="button" class="btn close" ng-click="setModalWindowNone()" aria-label="Close">
+                            <span aria-hidden="true" style="color: #D15F9F;">&times;</span>
+                        </button>
+                        <h4 class="text-center" style="color: #D17DAD;"><i class="fas fa-user-alt"></i>  USER FOUND</h4>
+                        <br />
+                        <p><b>Nickname:</b> {{foundUser.nickname}}</p>
+                        <p><b>Country:</b> {{foundUser.country}}</p>
+                        <p><b>City:</b> {{foundUser.city}}</p>
+                        <p><b>Registration date:</b> {{foundUser.registrationDate.year}}-{{foundUser.registrationDate.month}}-{{foundUser.registrationDate.dayOfMonth}}</p>
+                        <p><b>Birth date:</b> {{foundUser.birthDate.year}}-{{foundUser.birthDate.month}}-{{foundUser.birthDate.dayOfMonth}}</p>
+                    </div>
+
+                    <div id="user_not_found" ng-show="!showModalWindow">
+                        <button type="button" class="btn close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true" style="color: #D15F9F;">&times;</span>
+                        </button>
+                        <h4 class="text-center" style="color: #D17DAD;">{{findUserMessage}}</h4>
+                        <h4 class="text-center" style="color: #D17DAD;"><i id="smile" class="far fa-frown"></i></h4>
+                    </div>
+                </div>
+
+                <div id="user_found_btn" ng-show="showModalWindow" class="modal-footer" style="background: #6A0E42; color: #D15F9F; border-radius: 0;">
+                    <button class="btn btn-sm btn-outline-secondary" ng-click="setModalWindowNone(); addUserToFriendsList()"><i class="fas fa-user-check"></i> Add to friends list</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteUser" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-body" style="background: #6A0E42; color: #D15F9F;">
+                    <p class="text-center">Do you want to delete user <b>{{friendName}}</b>?</p>
+                    <br />
+                    <p class="text-center">
+                        <button class="btn btn-sm btn-secondary" onclick="hide()" ng-click="deleteUser(friendName)" data-toggle="modal" data-target="#deleteHistory">Yes</button>
+                        <button class="btn btn-sm btn-success" data-dismiss="modal">No</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="deleteHistory" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-body" style="background: #6A0E42; color: #D15F9F;">
+                    <p class="text-center">Do you want to delete the history with <b>{{friendName}}</b>?</p>
+                    <br />
+                    <p class="text-center">
+                        <button class="btn btn-sm btn-secondary" ng-click="deleteHistory(friendName)" onclick="window.location.reload()">Yes</button>
+                        <button class="btn btn-sm btn-success" onclick="window.location.reload()">No</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<script>
+    function hide() {
+        document.getElementById("deleteUser").style.display = "none";
+    }
+
+    function ctrlButton() {
+        var btn = document.getElementById("searchBtn");
+        btn.disabled = this.value.trim().length === 0;
+    }
+
+    var input = document.getElementById("searchInpt");
+    input.addEventListener('input', ctrlButton, false);
+    ctrlButton.call(input);
+
+</script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!DOCTYPE hibernate-configuration PUBLIC
+    "-//Hibernate/Hibernate Configuration DTD//EN"
+    "http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+  <session-factory>
+    <property name="hibernate.archive.autodetection">class,hbm</property>
+    <property name="hibernate.dialect">org.hibernate.dialect.Oracle10gDialect</property>
+    <property name="hibernate.show_sql">true</property>
+    <property name="hibernate.connection.driver_class">oracle.jdbc.OracleDriver</property>
+    <property name="hibernate.connection.username">chat_db</property>
+    <property name="hibernate.connection.password">1234</property>
+    <property name="hibernate.connection.url">jdbc:oracle:thin:@localhost:1521:xe</property>
+    <property name="hibernate.hbm2ddl.auto">update</property>
+
+    <property name="hibernate.c3p0.min_size">5</property>
+    <property name="hibernate.c3p0.max_size">20</property>
+    <property name="hibernate.c3p0.acquire_increment">2</property>
+    <property name="hibernate.c3p0.timeout">1800</property>
+    <property name="hibernate.c3p0.max_statements">150</property>
+  </session-factory>
+</hibernate-configuration>
